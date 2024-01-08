@@ -21,6 +21,7 @@ This will install the packages from the requirements.txt for this project.
 '''
 
 app = Flask(__name__)
+ckeditor = CKEditor(app)
 app.config['SECRET_KEY'] = '8BYkEfBA6O6donzWlSihBXox7C0sKR6b'
 Bootstrap5(app)
 
@@ -65,6 +66,21 @@ def show_post(post_id):
 
 
 # TODO: add_new_post() to create a new blog post
+class PostForm(FlaskForm):
+    title = StringField('blog title', validators=[DataRequired()])
+    subtitle = StringField('subtitle', validators=[DataRequired()])
+    author = StringField('author', validators=[DataRequired()])
+    image = StringField('image', validators=[DataRequired(), URL()])
+    body = CKEditorField('Body', validators=[DataRequired()])
+    submit = SubmitField('post')
+@app.route("/new-post", methods=["GET", "POST"])
+def new_post():
+    post_form = PostForm()
+    if post_form.validate_on_submit():
+        pass
+
+    return render_template("make-post.html", form=post_form)
+
 
 # TODO: edit_post() to change an existing blog post
 
