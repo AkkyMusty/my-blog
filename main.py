@@ -1,3 +1,5 @@
+import datetime
+
 from flask import Flask, render_template, redirect, url_for
 from flask_bootstrap import Bootstrap5
 from flask_sqlalchemy import SQLAlchemy
@@ -21,9 +23,9 @@ This will install the packages from the requirements.txt for this project.
 '''
 
 app = Flask(__name__)
-ckeditor = CKEditor(app)
 app.config['SECRET_KEY'] = '8BYkEfBA6O6donzWlSihBXox7C0sKR6b'
 Bootstrap5(app)
+ckeditor = CKEditor(app)
 
 # CONNECT TO DB
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///posts.db'
@@ -41,6 +43,14 @@ class BlogPost(db.Model):
     author = db.Column(db.String(250), nullable=False)
     img_url = db.Column(db.String(250), nullable=False)
 
+
+class PostForm(FlaskForm):
+    title = StringField('blog title', validators=[DataRequired()])
+    subtitle = StringField('subtitle', validators=[DataRequired()])
+    author = StringField('author', validators=[DataRequired()])
+    image = StringField('image', validators=[DataRequired(), URL()])
+    body = CKEditorField('Body', validators=[DataRequired()])
+    submit = SubmitField('Submit post')
 
 with app.app_context():
     db.create_all()
@@ -66,18 +76,22 @@ def show_post(post_id):
 
 
 # TODO: add_new_post() to create a new blog post
-class PostForm(FlaskForm):
-    title = StringField('blog title', validators=[DataRequired()])
-    subtitle = StringField('subtitle', validators=[DataRequired()])
-    author = StringField('author', validators=[DataRequired()])
-    image = StringField('image', validators=[DataRequired(), URL()])
-    body = CKEditorField('Body', validators=[DataRequired()])
-    submit = SubmitField('post')
+
 @app.route("/new-post", methods=["GET", "POST"])
 def new_post():
     post_form = PostForm()
     if post_form.validate_on_submit():
-        pass
+        time = datetime.datetime.now()
+        new_post = BlogPost()
+        new_post.title=post_form.title.data
+        new_post.subtitle=post_form.subtitle.data
+        new_post.date=time.strftime("%B %d, %y")
+        new_post.body = post_form.body.data
+        new_post.author = post_form.author.data
+        new_post.img_url = post_form.image.data
+        db.session.add(new_post)
+        db.session.commit()
+        return redirect(url_for("get_all_posts"))
 
     return render_template("make-post.html", form=post_form)
 
