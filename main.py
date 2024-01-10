@@ -79,6 +79,7 @@ def show_post(post_id):
 
 @app.route("/new-post", methods=["GET", "POST"])
 def new_post():
+    post_heading = "New Post"
     post_form = PostForm()
     if post_form.validate_on_submit():
         time = datetime.datetime.now()
@@ -93,10 +94,32 @@ def new_post():
         db.session.commit()
         return redirect(url_for("get_all_posts"))
 
-    return render_template("make-post.html", form=post_form)
+    return render_template("make-post.html", form=post_form, heading=post_heading)
 
 
 # TODO: edit_post() to change an existing blog post
+@app.route("/edit-post/<post_id>", methods=["GET","POST", "PATCH"])
+def edit_post(post_id):
+    post_heading = "Edit Post"
+    requested_post = db.session.execute(db.select(BlogPost).where(BlogPost.id == post_id)).scalar()
+    edit_form = PostForm(title = requested_post.title,
+                         subtitle = requested_post.subtitle,
+                         author = requested_post.author,
+                         image = requested_post.img_url,
+                         body = requested_post.body)
+    if edit_form.validate_on_submit():
+        edit_post = db.session.execute(db.select(BlogPost).where(BlogPost.id == post_id)).scalar()
+        edit_post.title = edit_form.title.data
+        edit_post.subtitle = edit_form.subtitle.data
+        edit_post.date = edit_post.date
+        edit_post.body = edit_form.body.data
+        edit_post.author = edit_form.author.data
+        edit_post.img_url = edit_form.image.data
+        db.session.commit()
+        return redirect(url_for('show_post', post_id=post_id))
+
+
+    return render_template("make-post.html", form=edit_form, heading=post_heading)
 
 # TODO: delete_post() to remove a blog post from the database
 
